@@ -87,7 +87,7 @@ pip freeze > requirements.txt
 If you would like to contribute to this project, please fork the repository and submit a pull request.
 
 ## License
-This project is licensed under the MIT License. See the `LICENSE` file for more information.
+This project is licensed under the Apache License 2.0 License. See the `LICENSE` file for more information.
 
 ## Contact
 For any questions or issues, please contact [pglaser@simio.com].
