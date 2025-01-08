@@ -35,6 +35,7 @@ This repository contains a Python script to interact with the Simio Portal Web A
 3. Create a `.env` file in the project root to store your personal access token:
    ```env
    PERSONAL_ACCESS_TOKEN=your_personal_access_token_here
+   PROJECT_NAME=your_project_name
    ```
 
 4. Add the `.env` file to `.gitignore` to ensure it is not committed to the repository:
