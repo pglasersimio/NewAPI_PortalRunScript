@@ -23,8 +23,8 @@ This repository contains a Python script to interact with the Simio Portal Web A
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/simio-portal-api.git
-   cd simio-portal-api
+   git clone https://github.com/pglasersimio/NewAPI_PortalRunScript.git
+   cd NewAPI_PortalRunScript
    ```
 
 2. Install the required Python packages:
