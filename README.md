@@ -66,6 +66,7 @@ This project uses the `python-dotenv` package to load environment variables from
 ### Example `.env` File:
 ```env
 PERSONAL_ACCESS_TOKEN=your_personal_access_token_here
+PROJECT_NAME=your_project_name
 ```
 
 ## Requirements
