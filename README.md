@@ -1,4 +1,4 @@
-# Simio Portal Web API Interaction
+# Simio Portal Web API Demo
 
 This repository contains a Python script to interact with the Simio Portal Web API using the `pysimio` package. The script allows you to start a simulation run, check its status periodically, and handle both existing and newly created runs.
 
