@@ -4,10 +4,11 @@ Main script to interact with the Simio Portal Web API using the pysimio package.
 """
 from helper import *
 from pysimio import pySimio
+from pysimio.classes import SimioExperimentRun, SimioScenario
 from dotenv import load_dotenv
 import os
 import json
-import time
+#import time
 
 # Load environment variables
 load_dotenv()
@@ -36,6 +37,18 @@ print(f"The experiment id for __default for project '{project_name}' is {experim
 
 # Get Run ID
 run_id = get_run_id(api.getRuns(experiment_id), plan_name)
+
+# Example usage
+
+test_run_request = set_run_json(experiment_id=experiment_id, name='test_name')
+print(json.dumps(test_run_request, indent=4))
+simio_run = SimioExperimentRun(test_run_request)
+
+
+
+
+"""
+old code to be deleted & revised
 
 if run_id == 0:
     # If plan name is not found, create a new run plan
@@ -81,4 +94,6 @@ else:
                 break
     else:
         print("No valid run_id found to start.")
+"""
+
 

@@ -3,6 +3,7 @@
 Helper functions for interacting with the Simio Portal Web API.
 """
 import sys
+import json
 
 def find_modelid_by_projectname(modellist, targetproject):
     """
@@ -96,3 +97,60 @@ def get_max_id_status(json_data):
                 status_message_of_max_id = additional_run.get("statusMessage")
 
     return max_id, status_of_max_id, status_message_of_max_id
+
+def set_run_json(experiment_id, description="New Run", name="Default Run", existing_experiment_run_id=0, run_plan=True, run_replications=True, allow_export_at_end_of_replication=True, scenarios=None, external_inputs=None, risk_analysis_confidence_level="Point90", warm_up_period_hours=0, upper_percentile="Percent75", lower_percentile="Percent1", primary_response="", default_replications_required=0, concurrent_replication_limit=0, start_end_time=None):
+    if scenarios is None:
+        scenarios = [
+            {
+                "name": "Default Scenario",
+                "replicationsRequired": 1,
+                "controlValues": [],
+                "connectorConfigurations": [],
+                "activeTableBindings": []
+            }
+        ]
+
+    if external_inputs is None:
+        external_inputs = []
+
+    if start_end_time is None:
+        start_end_time = {
+            "isSpecificStartTime": True,
+            "specificStartingTime": "2025-01-09T00:00:00Z",
+            "startTimeSelection": "Second",
+            "isSpecificEndTime": True,
+            "isInfinite": False,
+            "specificEndingTime": "2025-01-10T00:00:00Z",
+            "isRunLength": True,
+            "endTimeSelection": "Hours",
+            "endTimeRunValue": 24
+        }
+
+    run_request = {
+        "experimentId": experiment_id,
+        "description": description,
+        "name": name,
+        "existingExperimentRunId": existing_experiment_run_id,
+        "runPlan": run_plan,
+        "runReplications": run_replications,
+        "allowExportAtEndOfReplication": allow_export_at_end_of_replication,
+        "createInfo": {
+            "scenarios": scenarios,
+            "externalInputs": external_inputs,
+            "riskAnalysisConfidenceLevel": risk_analysis_confidence_level,
+            "warmUpPeriodHours": warm_up_period_hours,
+            "upperPercentile": upper_percentile,
+            "lowerPercentile": lower_percentile,
+            "primaryResponse": primary_response,
+            "defaultReplicationsRequired": default_replications_required,
+            "concurrentReplicationLimit": concurrent_replication_limit,
+            "startEndTime": start_end_time
+        }
+    }
+
+    return run_request
+"""
+# Example usage
+test_run_request = set_run_json(experiment_id=1, description='test')
+print(json.dumps(test_run_request, indent=4))
+"""
