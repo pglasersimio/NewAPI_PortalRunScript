@@ -4,11 +4,10 @@ Main script to interact with the Simio Portal Web API using the pysimio package.
 """
 from helper import *
 from pysimio import pySimio
-from pysimio.classes import SimioExperimentRun, SimioScenario
 from dotenv import load_dotenv
 import os
+import threading
 import json
-#import time
 
 # Load environment variables
 load_dotenv()
@@ -17,83 +16,60 @@ load_dotenv()
 simio_portal_url = "https://servicestest1.internal.simioportal.com:8443"
 personal_access_token = os.getenv("PERSONAL_ACCESS_TOKEN")
 project_name = os.getenv("PROJECT_NAME")
-plan_name = "_ModelValues4"
+plan_name = "ModelValues_test"
+auth_refresh_time = 500  # Time in seconds to refresh the auth token
+run_status_refresh_time = 10
 
 # Ensure token is loaded
 if not personal_access_token:
     raise ValueError("Personal access token not found. Make sure it's set in the environment.")
 
-# API Initialization
+# API Initialization getting bearer token for authorization
 api = pySimio(simio_portal_url)
 api.authenticate(personalAccessToken=personal_access_token)
 
+# Start token refresh in a background thread
+threading.Thread(target=refresh_auth_token, args=(api, auth_refresh_time), daemon=True).start()
+
 # Get Model ID
-model_id = find_modelid_by_projectname(api.getModels(), project_name)
-print(f"The id for project '{project_name}' is {model_id}")
+models_json = api.getModels()
+model_id = find_modelid_by_projectname(models_json, project_name)
+print(f"The model_id for project '{project_name}' is {model_id}")
 
-# Get Experiment ID
-experiment_id = get_id_for_default(api.getExperiments(model_id))
-print(f"The experiment id for __default for project '{project_name}' is {experiment_id}")
+# Get Model ID
+models_json = api.getModels()
+#print(json.dumps(models_json, indent=4))
+model_id = find_modelid_by_projectname(models_json, project_name)
+print(f"The model_id for project '{project_name}' is {model_id}")
 
-# Get Run ID
-run_id = get_run_id(api.getRuns(experiment_id), plan_name)
+# Get Experiment ID for __Default -- this is where plans are located
+experiments_json = api.getExperiments(model_id)
+#print(json.dumps(experiments_json, indent=4))
+experiment_id = get_id_for_default(experiments_json)
+print(f"The experiment id for '{plan_name}' for project '{project_name}' is {experiment_id}")
 
-# Example usage
+# Get parent run_id
+additionalruns_json = api.getRuns(experiment_id)
+#print(json.dumps(additionalruns_json, indent=4))
+existing_run_id = find_parent_run_id(additionalruns_json, plan_name)
+print(f"The run_id for '{plan_name}' for project '{project_name}' is {existing_run_id}")
 
-test_run_request = set_run_json(experiment_id=experiment_id, name='test_name')
-print(json.dumps(test_run_request, indent=4))
-simio_run = SimioExperimentRun(test_run_request)
-
-
-
-
-"""
-old code to be deleted & revised
-
-if run_id == 0:
-    # If plan name is not found, create a new run plan
-    print(f"Plan '{plan_name}' not found. Creating a new plan...")
-    new_run = api.createRun(modelId=model_id, experimentRunName=plan_name)
-    print(f"New run created with ID: {new_run}")
-
-    # Start the newly created run
-    run_started = api.startRunFromExisting(new_run, runPlan=True, runReplications=False)
-    print(f"Run started: {json.dumps(run_started, indent=4)}")
-
-    # Check new run status every 30 seconds until it is not 'Running'
-    while True:
-        time.sleep(30)
-        run_status_response = api.getRuns(experiment_id)
-        max_id, status, status_message = get_max_id_status(run_status_response)
-        print(f"Checking new run status: {status}, Status Message: {status_message}")
-
-        if status == "Running":
-            continue
-        else:
-            print(f"New run completed with Status: {status}, Status Message: {status_message}")
-            break
+# If a plan exists (existing_run_id > 0)), delete the existing plan by parent run_id, otherwise proceed to run creation
+if existing_run_id > 0:
+    print(f"The existing plan '{plan_name}' for project '{project_name}' will be deleted")
+    api.deleteRun(existing_run_id)  # Pass the run_id to delete the correct run
+    time.sleep(2)
+    print(f"The existing plan '{plan_name}' for project '{project_name}' was deleted")
 else:
-    print(f"The run id for __default for project '{project_name}' with experiment id {experiment_id} for plan named '{plan_name}' is {run_id}")
+    print(f"No existing plan '{plan_name}' found for project '{project_name}', proceeding to create a new run.")
 
-    # Start the run if run_id exists
-    if run_id > 0:
-        run_started = api.startRunFromExisting(run_id, runPlan=True, runReplications=False)
-        print(f"Run started: {json.dumps(run_started, indent=4)}")
+# Create a new Plan and return the run_id as new_run_id
+new_run_id = api.createRun(model_id, plan_name)
+print(f"The run_id for '{plan_name}' is {new_run_id } was created successfully")
 
-        # Check existing run status every 30 seconds until it is not 'Running'
-        while True:
-            time.sleep(30)
-            run_status_response = api.getRuns(experiment_id)
-            max_id, status, status_message = get_max_id_status(run_status_response)
-            print(f"Checking existing run status: {status}, Status Message: {status_message}")
+# Start new_run_id plan
+new_run_id_start_response = api.startRunFromExisting(existingExperimentRunId=new_run_id,runPlan=True,runReplications=True)
+print(f"The run_id for '{plan_name}' is {new_run_id } was started")
 
-            if status == "Running":
-                continue
-            else:
-                print(f"Existing run completed with Status: {status}, Status Message: {status_message}")
-                break
-    else:
-        print("No valid run_id found to start.")
-"""
-
-
+# Check new run status every 10 seconds until it is not 'Running'
+check_run_id_status(api, experiment_id, new_run_id, run_status_refresh_time)
