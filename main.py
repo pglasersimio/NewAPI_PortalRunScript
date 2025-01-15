@@ -33,11 +33,6 @@ threading.Thread(target=refresh_auth_token, args=(api, auth_refresh_time), daemo
 
 # Get Model ID
 models_json = api.getModels()
-model_id = find_modelid_by_projectname(models_json, project_name)
-print(f"The model_id for project '{project_name}' is {model_id}")
-
-# Get Model ID
-models_json = api.getModels()
 #print(json.dumps(models_json, indent=4))
 model_id = find_modelid_by_projectname(models_json, project_name)
 print(f"The model_id for project '{project_name}' is {model_id}")
