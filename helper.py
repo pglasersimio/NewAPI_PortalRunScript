@@ -3,9 +3,26 @@
 Helper functions for interacting with the Simio Portal Web API.
 """
 import sys
+import time
+import os
 import json
 
-def find_modelid_by_projectname(modellist, targetproject):
+def refresh_auth_token(api, refresh_interval):
+    """
+    Refreshes the authentication token at regular intervals.
+
+    :param api: The pySimio API object.
+    :param refresh_interval: Time in seconds between token refreshes.
+    """
+    while True:
+        try:
+            print("Refreshing authentication token...")
+            api.authenticate(personalAccessToken=os.getenv("PERSONAL_ACCESS_TOKEN"))
+            print("Token refreshed successfully.")
+        except Exception as e:
+            print(f"Error refreshing token: {e}")
+        time.sleep(refresh_interval)
+def find_modelid_by_projectname(modellist_json, targetproject):
     """
     Finds the model ID by project name.
 
@@ -16,13 +33,13 @@ def find_modelid_by_projectname(modellist, targetproject):
     Returns:
         int: The model ID if found, otherwise exits.
     """
-    for item in modellist:
+    for item in modellist_json:
         if item.get('projectName') == targetproject:
             return item.get('id')
     print(f"Model '{targetproject}' not found.")
     sys.exit()
 
-def get_id_for_default(json_data):
+def get_id_for_default(experiment_json):
     """
     Parses a JSON object and returns the id where name is '__Default'.
 
@@ -32,125 +49,86 @@ def get_id_for_default(json_data):
     Returns:
         int or None: The id if found, otherwise None.
     """
-    for item in json_data:
+    for item in experiment_json:
         if item.get('name') == '__Default':
             return item.get('id')
     return None
 
-def get_run_id(json_data, run_name):
+
+def find_parent_run_id(json_data, run_name):
     """
-    Finds the run ID for a given run name in the JSON data.
+    Finds the parent run ID for a given run name in the JSON data.
 
     Parameters:
         json_data (list): The JSON data to parse.
         run_name (str): The name of the run to search for.
 
     Returns:
-        int: The ID of the run if found, otherwise 0.
+        int: The parent run ID if found, otherwise 0.
     """
     for item in json_data:
         if item.get('name') == run_name:
             return item.get('id', 0)
     return 0
 
-def get_status_of_highest_additional_run(json_data):
+def check_run_id_status(api, experiment_id, run_id, sleep_time):
     """
-    Finds the status of the maximum 'id' in 'additionalRunsStatus' across all records.
+    Continuously checks the status of a specific run by its run_id,
+    including checking the max ID within additionalRunsStatus.
 
     Parameters:
-        json_data (list): List of JSON records.
+        api (object): The API object used to call getRuns().
+        experiment_id (int): The experiment ID to retrieve runs from.
+        run_id (int): The specific run ID to check.
+        sleep_time (int): The time to wait (in seconds) between status checks.
 
     Returns:
-        str: The status of the maximum 'id' in 'additionalRunsStatus', or None if not found.
+        None
     """
-    max_entry = None
+    while True:
+        time.sleep(sleep_time)
+        try:
+            # Fetch the list of runs for the given experiment ID
+            run_status_response = api.getRuns(experiment_id)
 
-    for record in json_data:
-        additional_runs = record.get('additionalRunsStatus', [])
-        if additional_runs:
-            current_max = max(additional_runs, key=lambda x: x.get('id', 0))
-            if not max_entry or current_max.get('id', 0) > max_entry.get('id', 0):
-                max_entry = current_max
+            # Print the raw response for troubleshooting
+            #print("\n--- Run Status Response (JSON) ---")
+            #print(json.dumps(run_status_response, indent=4))
 
-    return max_entry.get('status', None) if max_entry else None
+            # Search for the parent run_id in the response
+            run_status = next((run for run in run_status_response if run['id'] == run_id), None)
 
-def get_max_id_status(json_data):
-    """
-    Finds the maximum ID and its status and status message.
+            # Check if the run_id was found
+            if run_status is None:
+                print(f"Run ID {run_id} not found in the experiment {experiment_id}.")
+                break
 
-    Parameters:
-        json_data (list): List of JSON records.
+            # Search for the child id (max ID) within additionalRunsStatus portion of JSON
+            additional_runs = run_status.get('additionalRunsStatus', [])
+            if additional_runs:
+                # Find the run with the max ID in additionalRunsStatus
+                max_additional_run = max(additional_runs, key=lambda x: x['id'])
+                status = max_additional_run.get('status', 'Unknown')
+                status_message = max_additional_run.get('statusMessage', '')
+            else:
+                # If no additional runs, use the top-level run status
+                status = run_status.get('status', 'Unknown')
+                status_message = run_status.get('statusMessage', '')
 
-    Returns:
-        tuple: Max ID, status, and status message.
-    """
-    max_id = -1
-    status_of_max_id = None
-    status_message_of_max_id = None
+            # Print the current status
+            if status_message:
+                print(f"Checking run ID {run_id}: Status = {status}, Message = {status_message}")
+            else:
+                print(f"Checking run ID {run_id}: Status = {status}")
 
-    for run in json_data:
-        for additional_run in run.get("additionalRunsStatus", []):
-            run_id = additional_run.get("id", -1)
-            if run_id > max_id:
-                max_id = run_id
-                status_of_max_id = additional_run.get("status")
-                status_message_of_max_id = additional_run.get("statusMessage")
+            # Continue checking if the run is still "Running" or "NotStarted"
+            if status in ["Running", "NotStarted"]:
+                continue
+            else:
+                # Run completed or failed
+                print(f"Run ID {run_id} completed with Status: {status}, Message = {status_message}")
+                break
+        except Exception as e:
+            print(f"Error checking run status: {str(e)}")
+            break
 
-    return max_id, status_of_max_id, status_message_of_max_id
-
-def set_run_json(experiment_id, description="New Run", name="Default Run", existing_experiment_run_id=0, run_plan=True, run_replications=True, allow_export_at_end_of_replication=True, scenarios=None, external_inputs=None, risk_analysis_confidence_level="Point90", warm_up_period_hours=0, upper_percentile="Percent75", lower_percentile="Percent1", primary_response="", default_replications_required=0, concurrent_replication_limit=0, start_end_time=None):
-    if scenarios is None:
-        scenarios = [
-            {
-                "name": "Default Scenario",
-                "replicationsRequired": 1,
-                "controlValues": [],
-                "connectorConfigurations": [],
-                "activeTableBindings": []
-            }
-        ]
-
-    if external_inputs is None:
-        external_inputs = []
-
-    if start_end_time is None:
-        start_end_time = {
-            "isSpecificStartTime": True,
-            "specificStartingTime": "2025-01-09T00:00:00Z",
-            "startTimeSelection": "Second",
-            "isSpecificEndTime": True,
-            "isInfinite": False,
-            "specificEndingTime": "2025-01-10T00:00:00Z",
-            "isRunLength": True,
-            "endTimeSelection": "Hours",
-            "endTimeRunValue": 24
-        }
-
-    run_request = {
-        "experimentId": experiment_id,
-        "description": description,
-        "name": name,
-        "existingExperimentRunId": existing_experiment_run_id,
-        "runPlan": run_plan,
-        "runReplications": run_replications,
-        "allowExportAtEndOfReplication": allow_export_at_end_of_replication,
-        "createInfo": {
-            "scenarios": scenarios,
-            "externalInputs": external_inputs,
-            "riskAnalysisConfidenceLevel": risk_analysis_confidence_level,
-            "warmUpPeriodHours": warm_up_period_hours,
-            "upperPercentile": upper_percentile,
-            "lowerPercentile": lower_percentile,
-            "primaryResponse": primary_response,
-            "defaultReplicationsRequired": default_replications_required,
-            "concurrentReplicationLimit": concurrent_replication_limit,
-            "startEndTime": start_end_time
-        }
-    }
-
-    return run_request
-"""
-# Example usage
-test_run_request = set_run_json(experiment_id=1, description='test')
-print(json.dumps(test_run_request, indent=4))
-"""
