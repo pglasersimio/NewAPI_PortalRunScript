@@ -117,16 +117,19 @@ def check_run_id_status(api, experiment_id, run_id, sleep_time):
 
             # Print the current status
             if status_message:
-                print(f"Checking run ID {run_id}: Status = {status}, Message = {status_message}")
+                print(f"Status = {status}, Message = {status_message}")
             else:
-                print(f"Checking run ID {run_id}: Status = {status}")
+                print(f"Status = {status}")
 
             # Continue checking if the run is still "Running" or "NotStarted"
             if status in ["Running", "NotStarted"]:
                 continue
             else:
                 # Run completed or failed
-                print(f"Run ID {run_id} completed with Status: {status}, Message = {status_message}")
+                if status_message:
+                    print(f"Status: {status}, Message = {status_message}")
+                else:
+                    print(f"Done")
                 break
         except Exception as e:
             print(f"Error checking run status: {str(e)}")

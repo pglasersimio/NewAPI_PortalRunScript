@@ -13,12 +13,12 @@ import json
 load_dotenv()
 
 # Configuration
-simio_portal_url = "https://servicestest1.internal.simioportal.com:8443"
+simio_portal_url = os.getenv("SIMIO_PORTAL_URL")
 personal_access_token = os.getenv("PERSONAL_ACCESS_TOKEN")
 project_name = os.getenv("PROJECT_NAME")
 plan_name = "ModelValues_test"
 auth_refresh_time = 500  # Time in seconds to refresh the auth token
-run_status_refresh_time = 10
+run_status_refresh_time = 2
 
 # Ensure token is loaded
 if not personal_access_token:
@@ -41,30 +41,29 @@ print(f"The model_id for project '{project_name}' is {model_id}")
 experiments_json = api.getExperiments(model_id)
 #print(json.dumps(experiments_json, indent=4))
 experiment_id = get_id_for_default(experiments_json)
-print(f"The experiment id for '{plan_name}' for project '{project_name}' is {experiment_id}")
+print(f"The experiment id for '__Default' for project '{project_name}' is {experiment_id}.  This is where schedule plans reside.")
 
 # Get parent run_id
 additionalruns_json = api.getRuns(experiment_id)
 #print(json.dumps(additionalruns_json, indent=4))
 existing_run_id = find_parent_run_id(additionalruns_json, plan_name)
-print(f"The run_id for '{plan_name}' for project '{project_name}' is {existing_run_id}")
+print(f"The parent run_id for '{plan_name}' for project '{project_name}' is {existing_run_id}")
 
 # If a plan exists (existing_run_id > 0)), delete the existing plan by parent run_id, otherwise proceed to run creation
 if existing_run_id > 0:
-    print(f"The existing plan '{plan_name}' for project '{project_name}' will be deleted")
+    print(f"The existing parent run_id {existing_run_id} for plan '{plan_name}' for project '{project_name}' will be deleted.")
     api.deleteRun(existing_run_id)  # Pass the run_id to delete the correct run
-    time.sleep(2)
-    print(f"The existing plan '{plan_name}' for project '{project_name}' was deleted")
+    print(f"The existing parent run_id {existing_run_id} for plan '{plan_name}' for project '{project_name}' was deleted. All additional related child run_ids are deleted too.")
 else:
     print(f"No existing plan '{plan_name}' found for project '{project_name}', proceeding to create a new run.")
 
 # Create a new Plan and return the run_id as new_run_id
 new_run_id = api.createRun(model_id, plan_name)
-print(f"The run_id for '{plan_name}' is {new_run_id } was created successfully")
+print(f"The new parent run_id for '{plan_name}' is {new_run_id } was created successfully")
 
 # Start new_run_id plan
 new_run_id_start_response = api.startRunFromExisting(existingExperimentRunId=new_run_id,runPlan=True,runReplications=True)
-print(f"The run_id for '{plan_name}' is {new_run_id } was started")
+print(f"The plan '{plan_name}' for '{project_name}' was started.")
 
 # Check new run status every 10 seconds until it is not 'Running'
 check_run_id_status(api, experiment_id, new_run_id, run_status_refresh_time)
