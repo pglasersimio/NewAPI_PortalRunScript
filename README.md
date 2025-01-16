@@ -36,6 +36,7 @@ This repository contains a Python script to interact with the Simio Portal Web A
    ```env
    PERSONAL_ACCESS_TOKEN=your_personal_access_token_here
    PROJECT_NAME=your_project_name
+   SIMIO_PORTAL_URL=your_url
    ```
 
 4. Add the `.env` file to `.gitignore` to ensure it is not committed to the repository:
@@ -55,18 +56,31 @@ This repository contains a Python script to interact with the Simio Portal Web A
 
 ## Helper Functions
 The `helper.py` file contains the following functions:
-- `find_modelid_by_projectname()` - Finds the model ID by project name.
-- `get_id_for_default()` - Retrieves the experiment ID for the default experiment.
-- `get_run_id()` - Retrieves the run ID for a given plan name.
-- `get_max_id_status()` - Retrieves the maximum run ID and its status and status message.
+
+- `refresh_auth_token(api, refresh_interval)`  
+  Refreshes the API authentication token at regular intervals using the `PERSONAL_ACCESS_TOKEN` environment variable.
+
+- `find_modelid_by_projectname(modellist_json, targetproject)`  
+  Finds the model ID for a given project name. Exits if the project is not found.
+
+- `get_id_for_default(experiment_json)`  
+  Retrieves the experiment ID for the default experiment (`__Default`).
+
+- `find_parent_run_id(json_data, run_name)`  
+  Finds the parent run ID for a specified run name within JSON data.
+
+- `check_run_id_status(api, experiment_id, run_id, sleep_time)`  
+  Monitors the status of a specific run ID and its associated child runs, providing detailed status updates until completion or failure.
+
 
 ## Environment Variables
 This project uses the `python-dotenv` package to load environment variables from a `.env` file.
 
 ### Example `.env` File:
 ```env
-PERSONAL_ACCESS_TOKEN=your_personal_access_token_here
+PERSONAL_ACCESS_TOKEN=your_personal_access_token
 PROJECT_NAME=your_project_name
+SIMIO_PORTAL_URL=your_url
 ```
 
 ## Requirements
@@ -76,6 +90,7 @@ PROJECT_NAME=your_project_name
 - `tenacity`
 - `decorator`
 - `python-dotenv`
+- `load_dotenv`
 
 ## Adding Dependencies
 If you need to add more Python packages, update the `requirements.txt` file:
