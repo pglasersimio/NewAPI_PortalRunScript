@@ -18,7 +18,7 @@ personal_access_token = os.getenv("PERSONAL_ACCESS_TOKEN")
 project_name = os.getenv("PROJECT_NAME")
 plan_name = "ModelValues_test"
 auth_refresh_time = 500  # Time in seconds to refresh the auth token
-run_status_refresh_time = 2
+run_status_refresh_time = 10
 
 # Ensure token is loaded
 if not personal_access_token:
@@ -61,9 +61,18 @@ else:
 new_run_id = api.createRun(model_id, plan_name)
 print(f"The new parent run_id for '{plan_name}' is {new_run_id } was created successfully")
 
+# Update a control value
+update_controls = api.setControlValues(runId=new_run_id, scenarioName=plan_name, controlName='EntitiesToCreate', controlValue='100' )
+print(f"The control value for run_id  {new_run_id }' and plan nam' {plan_name}' was updated successfully Message: {update_controls}")
+
+# Adjust the start date/time
+run_date_updated = api.setRunTimeOptions(new_run_id, isSpecificStartTime=True, specificStartingTime='2025-12-13T03:14:00Z', isSpecificEndTime=True, specificEndingTime='2025-12-20T03:14:00Z')
+print(run_date_updated)
+
 # Start new_run_id plan
 new_run_id_start_response = api.startRunFromExisting(existingExperimentRunId=new_run_id,runPlan=True,runReplications=True)
 print(f"The plan '{plan_name}' for '{project_name}' was started.")
 
 # Check new run status every 10 seconds until it is not 'Running'
 check_run_id_status(api, experiment_id, new_run_id, run_status_refresh_time)
+
