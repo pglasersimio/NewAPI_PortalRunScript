@@ -7,6 +7,7 @@ from pysimio import pySimio
 from dotenv import load_dotenv
 import os
 import threading
+from pysimio.classes import TimeOptions
 import json
 
 # Load environment variables
@@ -66,7 +67,10 @@ update_controls = api.setControlValues(runId=new_run_id, scenarioName=plan_name,
 print(f"The control value for run_id  {new_run_id }' and plan nam' {plan_name}' was updated successfully Message: {update_controls}")
 
 # Adjust the start date/time
-run_date_updated = api.setRunTimeOptions(new_run_id, isSpecificStartTime=True, specificStartingTime='2025-12-13T03:14:00Z', isSpecificEndTime=True, specificEndingTime='2025-12-20T03:14:00Z')
+#run_date_updated = TimeOptions(runId=new_run_id, isSpecificStartTime=True, specificStartingTime='2025-12-13T03:14:00Z', isSpecificEndTime=True, specificEndingTime='2025-12-20T03:14:00Z')
+run_time_options = TimeOptions(runId=new_run_id, isSpecificStartTime=True, specificStartingTime='2025-12-13T03:14:00Z',
+                               isSpecificEndTime=True, specificEndingTime='2025-12-20T03:14:00Z')
+run_date_updated = api.setRunTimeOptions(run_time_options)
 print(run_date_updated)
 
 # Start new_run_id plan
