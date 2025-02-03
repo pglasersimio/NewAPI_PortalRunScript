@@ -3,5 +3,5 @@
 
 echo "Installing required packages..."
 pip install load_dotenv tenacity requests decorator
-pip install -i https://test.pypi.org/simple/ pysimio>=0.0.12
+pip install -i https://test.pypi.org/simple/ pysimio>=0.0.13
 echo "All packages installed successfully."

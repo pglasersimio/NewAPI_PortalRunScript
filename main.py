@@ -20,6 +20,10 @@ project_name = os.getenv("PROJECT_NAME")
 plan_name = "ModelValues_test"
 auth_refresh_time = 500  # Time in seconds to refresh the auth token
 run_status_refresh_time = 10
+UseSpecificStartTime = True
+UseSpecificEndTime = True
+plan_start_datetime = '2025-12-13T03:14:00Z'
+plan_end_dateTime = '2025-12-20T03:14:00Z'
 
 # Ensure token is loaded
 if not personal_access_token:
@@ -63,15 +67,14 @@ new_run_id = api.createRun(model_id, plan_name)
 print(f"The new parent run_id for '{plan_name}' is {new_run_id } was created successfully")
 
 # Update a control value
-update_controls = api.setControlValues(runId=new_run_id, scenarioName=plan_name, controlName='EntitiesToCreate', controlValue='100' )
-print(f"The control value for run_id  {new_run_id }' and plan nam' {plan_name}' was updated successfully Message: {update_controls}")
+api.setControlValues(runId=new_run_id, scenarioName=plan_name, controlName='EntitiesToCreate', controlValue='100' )
+print(f"The control value for run_id  {new_run_id }' and plan name' {plan_name}' was updated successfully")
 
 # Adjust the start date/time
-#run_date_updated = TimeOptions(runId=new_run_id, isSpecificStartTime=True, specificStartingTime='2025-12-13T03:14:00Z', isSpecificEndTime=True, specificEndingTime='2025-12-20T03:14:00Z')
-run_time_options = TimeOptions(runId=new_run_id, isSpecificStartTime=True, specificStartingTime='2025-12-13T03:14:00Z',
-                               isSpecificEndTime=True, specificEndingTime='2025-12-20T03:14:00Z')
-run_date_updated = api.setRunTimeOptions(run_time_options)
-print(run_date_updated)
+run_time_options = TimeOptions(runId=new_run_id, isSpecificStartTime=UseSpecificStartTime, specificStartingTime=plan_start_datetime,
+                               isSpecificEndTime=UseSpecificEndTime, specificEndingTime=plan_end_dateTime)
+api.setRunTimeOptions(run_time_options)
+print(f"The control value for run_id  {new_run_id}' and plan name' {plan_name}' was updated to start at {plan_start_datetime} and end at {plan_end_dateTime}")
 
 # Start new_run_id plan
 new_run_id_start_response = api.startRunFromExisting(existingExperimentRunId=new_run_id,runPlan=True,runReplications=True)
