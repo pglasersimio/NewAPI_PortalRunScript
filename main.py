@@ -68,13 +68,13 @@ print(f"The new parent run_id for '{plan_name}' is {new_run_id } was created suc
 
 # Update a control value
 api.setControlValues(runId=new_run_id, scenarioName=plan_name, controlName='EntitiesToCreate', controlValue='100' )
-print(f"The control value for run_id  {new_run_id }' and plan name' {plan_name}' was updated successfully")
+print(f"The control value for run_id {new_run_id } and plan name '{plan_name}' was updated successfully")
 
 # Adjust the start date/time
 run_time_options = TimeOptions(runId=new_run_id, isSpecificStartTime=UseSpecificStartTime, specificStartingTime=plan_start_datetime,
                                isSpecificEndTime=UseSpecificEndTime, specificEndingTime=plan_end_dateTime)
 api.setRunTimeOptions(run_time_options)
-print(f"The control value for run_id  {new_run_id}' and plan name' {plan_name}' was updated to start at {plan_start_datetime} and end at {plan_end_dateTime}")
+print(f"The control value for run_id {new_run_id} and plan name '{plan_name}' was updated to start at {plan_start_datetime} and end at {plan_end_dateTime}")
 
 # Start new_run_id plan
 new_run_id_start_response = api.startRunFromExisting(existingExperimentRunId=new_run_id,runPlan=True,runReplications=True)
