@@ -39,22 +39,6 @@ def find_modelid_by_projectname(modellist_json, targetproject):
     print(f"Model '{targetproject}' not found.")
     sys.exit()
 
-def get_id_for_default(experiment_json):
-    """
-    Parses a JSON object and returns the id where name is '__Default'.
-
-    Parameters:
-        json_data (list): The JSON data to parse.
-
-    Returns:
-        int or None: The id if found, otherwise None.
-    """
-    for item in experiment_json:
-        if item.get('name') == '__Default':
-            return item.get('id')
-    return None
-
-
 def find_parent_run_id(json_data, run_name):
     """
     Finds the parent run ID for a given run name in the JSON data.
@@ -134,4 +118,19 @@ def check_run_id_status(api, experiment_id, run_id, sleep_time):
         except Exception as e:
             print(f"Error checking run status: {str(e)}")
             break
+
+def get_parent_experiment_id(data, project_name):
+    # Retrieves the experiment ID for a given project name from the JSON dataset.
+    #
+    # Parameters:
+    #     data (list): A list of dictionaries representing JSON data.
+    #     project_name (str): The name of the project to find the experiment ID for.
+    #
+    # Returns:
+    #     int or None: The experiment ID if found, otherwise None.
+    for entry in data:
+        if entry.get("projectName") == project_name:
+            return entry.get("experimentId")
+    return None  # Return None if no match is found
+
 

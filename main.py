@@ -42,17 +42,17 @@ models_json = api.getModels()
 model_id = find_modelid_by_projectname(models_json, project_name)
 print(f"The model_id for project '{project_name}' is {model_id}")
 
-# Get Experiment ID for __Default -- this is where plans are located
-experiments_json = api.getExperiments(model_id)
-#print(json.dumps(experiments_json, indent=4))
-experiment_id = get_id_for_default(experiments_json)
-print(f"The experiment id for '__Default' for project '{project_name}' is {experiment_id}.  This is where schedule plans reside.")
+# Get experiment id for plans
+all_runs_json = api.getRuns()
+experiment_id = get_parent_experiment_id(all_runs_json, project_name)
+print(f"The experiment id for plans for project '{project_name}' is {experiment_id}.  This is where schedule plans reside.")
 
-# Get parent run_id
+# Find existing run_id for parent experiment id
 additionalruns_json = api.getRuns(experiment_id)
 #print(json.dumps(additionalruns_json, indent=4))
 existing_run_id = find_parent_run_id(additionalruns_json, plan_name)
 print(f"The parent run_id for '{plan_name}' for project '{project_name}' is {existing_run_id}")
+
 
 # If a plan exists (existing_run_id > 0)), delete the existing plan by parent run_id, otherwise proceed to run creation
 if existing_run_id > 0:
@@ -82,4 +82,5 @@ print(f"The plan '{plan_name}' for '{project_name}' was started.")
 
 # Check new run status every 10 seconds until it is not 'Running'
 check_run_id_status(api, experiment_id, new_run_id, run_status_refresh_time)
+
 
