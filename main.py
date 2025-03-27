@@ -44,12 +44,14 @@ print(f"The model_id for project '{project_name}' is {model_id}")
 
 # Get experiment id for plans
 all_runs_json = api.getRuns()
+#print(json.dumps(all_runs_json, indent=4))
 experiment_id = get_parent_experiment_id(all_runs_json, project_name)
 print(f"The experiment id for plans for project '{project_name}' is {experiment_id}.  This is where schedule plans reside.")
 
 # Find existing run_id for parent experiment id
 additionalruns_json = api.getRuns(experiment_id)
 #print(json.dumps(additionalruns_json, indent=4))
+
 existing_run_id = find_parent_run_id(additionalruns_json, plan_name)
 print(f"The parent run_id for '{plan_name}' for project '{project_name}' is {existing_run_id}")
 
@@ -76,8 +78,8 @@ run_time_options = TimeOptions(runId=new_run_id, isSpecificStartTime=UseSpecific
 api.setRunTimeOptions(run_time_options)
 print(f"The control value for run_id {new_run_id} and plan name '{plan_name}' was updated to start at {plan_start_datetime} and end at {plan_end_dateTime}")
 
-# Start new_run_id plan
-new_run_id_start_response = api.startRunFromExisting(existingExperimentRunId=new_run_id,runPlan=True,runReplications=True)
+# Start new_run_id plan, set runReplications to True for Risk Analysis
+new_run_id_start_response = api.startRunFromExisting(existingExperimentRunId=new_run_id,runPlan=True,runReplications=False)
 print(f"The plan '{plan_name}' for '{project_name}' was started.")
 
 # Check new run status every 10 seconds until it is not 'Running'
