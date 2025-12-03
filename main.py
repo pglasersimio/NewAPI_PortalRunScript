@@ -43,6 +43,7 @@ model_id = find_modelid_by_projectname(models_json, project_name)
 print(f"The model_id for project '{project_name}' is {model_id}")
 
 # Get experiment id for plans
+#all_runs_json = api.getRuns(modelId=model_id,experimentName="ModelValues_Test")
 all_runs_json = api.getRuns()
 #print(json.dumps(all_runs_json, indent=4))
 experiment_id = get_parent_experiment_id(all_runs_json, project_name)
@@ -54,6 +55,8 @@ additionalruns_json = api.getRuns(experiment_id)
 
 existing_run_id = find_parent_run_id(additionalruns_json, plan_name)
 print(f"The parent run_id for '{plan_name}' for project '{project_name}' is {existing_run_id}")
+id_value = all_runs_json[0]["id"]
+print(f"The parent run_id for '{plan_name}' for project '{project_name}' is {id_value}")
 
 
 # If a plan exists (existing_run_id > 0)), delete the existing plan by parent run_id, otherwise proceed to run creation
