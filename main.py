@@ -30,8 +30,7 @@ show_table_schema = True        # Display table schema after run completes
 show_sample_table_data = True   # Display sample table data (first non-empty table, top 10 rows)
 show_log_schema = True          # Display log schema after run completes
 show_sample_log_data = True     # Display sample log data (first non-empty log, top 10 rows)
-show_table_summary = True       # Full paged dump of a specific table
-summary_table_name = "ManufacturingOrders"  # Table to dump in full
+show_table_summary = True       # Prompt user to pick a table for full paged dump
 summary_page_size = 100         # Rows per API page when fetching full table
 
 # Ensure token is loaded
@@ -113,4 +112,6 @@ if show_log_schema:
 if show_sample_log_data:
     display_sample_log_data(api, new_run_id)
 if show_table_summary:
-    display_full_table(api, new_run_id, plan_name, summary_table_name, summary_page_size)
+    selected_table = prompt_table_selection(api, model_id, new_run_id)
+    if selected_table:
+        display_full_table(api, new_run_id, plan_name, selected_table, summary_page_size)

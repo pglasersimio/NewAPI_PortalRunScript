@@ -195,6 +195,46 @@ def display_and_update_control_values(api, run_id, scenario_name):
         print(f"  {'─' * 60}")
 
 
+def prompt_table_selection(api, model_id, run_id):
+    """Fetch table names from schema (or scenario bindings) and let the user pick one. Returns name or None."""
+    table_schema_json = api.getModelTable(model_id)
+    table_names = []
+
+    if table_schema_json and isinstance(table_schema_json, list):
+        table_names = [t.get('name', '?') for t in table_schema_json]
+    else:
+        scenario_data = api.getScenarios(run_id=run_id)
+        if scenario_data and isinstance(scenario_data, list):
+            for sc in scenario_data:
+                for b in (sc.get('activeTableBindings') or []):
+                    tname = b.get('tableName', '?')
+                    if tname not in table_names:
+                        table_names.append(tname)
+
+    if not table_names:
+        print("  No tables found for this model.")
+        return None
+
+    print(f"\n  {'─' * 60}")
+    print(f"  Available Tables")
+    print(f"  {'─' * 60}")
+    for i, name in enumerate(table_names, 1):
+        print(f"  {i:>3}. {name}")
+    print(f"  {'─' * 60}")
+
+    choice = input("\n  Enter table # to dump in full (or press Enter to skip): ").strip()
+    if not choice:
+        return None
+    try:
+        idx = int(choice) - 1
+        if 0 <= idx < len(table_names):
+            return table_names[idx]
+        print(f"  Invalid selection. Enter a number 1-{len(table_names)}.")
+    except ValueError:
+        print(f"  Invalid input.")
+    return None
+
+
 def display_full_table(api, run_id, scenario_name, table_name, page_size=100):
     """Fetch all rows of a table via paging and display the full result."""
     print("\n" + "=" * 80)
