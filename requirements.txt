@@ -1,5 +1,8 @@
-pysimio
+# Both modes
+python-dotenv
 requests
+
+# Only needed when USE_PYSIMIO=True
+pysimio
 tenacity
 decorator
-python-dotenv

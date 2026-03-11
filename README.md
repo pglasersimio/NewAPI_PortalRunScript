@@ -1,17 +1,29 @@
 # Simio Portal Web API Demo
 
-This repository contains a Python script to interact with the Simio Portal Web API using the `pysimio` package. The script creates a simulation run, optionally adjusts control values and time options, monitors progress, and retrieves post-run data (table schemas, table data, log schemas, and log data).
+This repository contains a Python script to interact with the Simio Portal Web API. It supports two modes — using the `pysimio` library or making direct REST API calls — switchable via a single toggle in the `.env` file.
 
 ## Project Structure
 
 ```
 .
-├── main.py           # Main script to interact with the Simio Portal
-├── helper.py         # Contains helper functions used in main.py
-├── .env              # Environment variables file (not included in the repo)
-├── README.md         # Project documentation
-└── requirements.txt  # Python dependencies
+├── main.py               # Main script (reads USE_PYSIMIO toggle to pick API mode)
+├── shared_helper.py      # Shared helper functions (works with either API mode)
+├── simio_api_helper.py   # Direct REST API client (SimioAPI class, no pysimio dependency)
+├── helper.py             # Original helper functions (kept for reference)
+├── .env                  # Environment variables (not included in repo)
+├── README.md             # Project documentation
+├── requirements.txt      # Python dependencies
+└── LICENSE.txt           # Apache License 2.0
 ```
+
+## API Modes
+
+| Mode | Toggle | Description |
+|------|--------|-------------|
+| **pysimio** | `USE_PYSIMIO=True` | Uses the `pysimio` library (default) |
+| **Direct REST** | `USE_PYSIMIO=False` | Uses `SimioAPI` class with direct `requests` calls — no pysimio dependency needed |
+
+Both modes share the same helpers (`shared_helper.py`) and produce identical behavior. The `SimioAPI` class mirrors pysimio's method signatures exactly.
 
 ## Features
 - Authenticate with the Simio Portal API with automatic token refresh.
@@ -25,7 +37,7 @@ This repository contains a Python script to interact with the Simio Portal Web A
   - **Sample table data** — show the first 10 rows of the first non-empty table.
   - **Log schema** — display log names and column definitions.
   - **Sample log data** — show the first 10 rows of the first non-empty log.
-  - **Full table dump** — page through and display all rows of a specific table (e.g. `ManufacturingOrders`).
+  - **Full table dump** — page through and display all rows of a user-selected table.
 
 ## Installation
 
@@ -40,16 +52,11 @@ This repository contains a Python script to interact with the Simio Portal Web A
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the project root to store your personal access token:
+3. Create a `.env` file in the project root:
    ```env
    PERSONAL_ACCESS_TOKEN=your_personal_access_token_here
    SIMIO_PORTAL_URL=your_url
-   ```
-
-4. Add the `.env` file to `.gitignore` to ensure it is not committed to the repository:
-   ```gitignore
-   # Ignore environment file
-   .env
+   USE_PYSIMIO=True
    ```
 
 ## Configuration
@@ -73,7 +80,6 @@ show_sample_table_data = True
 show_log_schema = True
 show_sample_log_data = True
 show_table_summary = True
-summary_table_name = "ManufacturingOrders"
 summary_page_size = 100
 ```
 
@@ -81,17 +87,20 @@ summary_page_size = 100
 
 1. Update the configuration in `main.py` with your project name, plan name, and time options.
 
-2. Run the script:
+2. Set `USE_PYSIMIO` in `.env` to `True` (pysimio library) or `False` (direct REST API).
+
+3. Run the script:
    ```bash
    python main.py
    ```
 
-3. When prompted, review the control values and either adjust them or press Enter to proceed with defaults.
+4. When prompted, review the control values and either adjust them or press Enter to proceed with defaults.
 
-4. The script will start the plan, display real-time progress, and (on success) show post-run data based on your toggle settings.
+5. The script will start the plan, display real-time progress, and (on success) show post-run data based on your toggle settings.
 
-## Helper Functions
-The `helper.py` file contains the following functions:
+## Shared Helper Functions
+
+The `shared_helper.py` file contains functions used by both API modes:
 
 - `refresh_auth_token(api, refresh_interval)` — Refreshes the API authentication token at regular intervals.
 - `find_modelid_by_projectname(modellist_json, targetproject)` — Finds the model ID for a given project name.
@@ -99,6 +108,7 @@ The `helper.py` file contains the following functions:
 - `check_run_id_status(api, experiment_id, run_id, sleep_time)` — Monitors run status including child runs in `additionalRunsStatus`.
 - `get_parent_experiment_id(data, project_name)` — Retrieves the experiment ID for a given project name.
 - `display_and_update_control_values(api, run_id, scenario_name)` — Fetches control values and prompts the user to adjust any before running.
+- `prompt_table_selection(api, model_id, run_id)` — Displays available tables and lets the user pick one.
 - `display_full_table(api, run_id, scenario_name, table_name, page_size)` — Pages through and displays all rows of a specific table.
 - `print_table(data, max_rows, indent)` — Pretty-prints a list of flat dicts as an aligned table.
 - `display_table_schema(api, model_id, run_id)` — Fetches and displays table schemas (with fallback to scenario bindings).
@@ -107,22 +117,23 @@ The `helper.py` file contains the following functions:
 - `display_and_poll_run_progress(api, run_id, plan_name, refresh_interval)` — Displays initial run progress then polls until complete/failed/canceled.
 - `display_sample_log_data(api, run_id)` — Displays sample rows from the first non-empty log endpoint.
 
-## Environment Variables
-This project uses the `python-dotenv` package to load environment variables from a `.env` file.
+## Direct REST API Client
 
-### Example `.env` File:
-```env
-PERSONAL_ACCESS_TOKEN=your_personal_access_token
-SIMIO_PORTAL_URL=your_url
-```
+The `simio_api_helper.py` file provides `SimioAPI` — a standalone REST client that mirrors pysimio's interface using only the `requests` library. It also includes a `TimeOptions` dataclass. Use this mode when you want to avoid the pysimio dependency.
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `PERSONAL_ACCESS_TOKEN` | Your Simio Portal personal access token |
+| `SIMIO_PORTAL_URL` | Base URL of your Simio Portal instance |
+| `USE_PYSIMIO` | `True` to use pysimio library, `False` for direct REST calls (default: `True`) |
 
 ## Requirements
-- Python 3.8+
-- `pysimio`
-- `requests`
-- `tenacity`
-- `decorator`
+- Python 3.9+
 - `python-dotenv`
+- `requests`
+- `pysimio` (only when `USE_PYSIMIO=True`)
 
 ## Contributing
 If you would like to contribute to this project, please fork the repository and submit a pull request.

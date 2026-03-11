@@ -23,3 +23,6 @@ env/
 # OS
 Thumbs.db
 .DS_Store
+
+# Scratch / ad-hoc testing scripts
+scratch*
