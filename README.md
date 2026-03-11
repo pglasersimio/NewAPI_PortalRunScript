@@ -6,14 +6,15 @@ This repository contains a Python script to interact with the Simio Portal Web A
 
 ```
 .
-├── main.py               # Main script (reads USE_PYSIMIO toggle to pick API mode)
-├── shared_helper.py      # Shared helper functions (works with either API mode)
-├── simio_api_helper.py   # Direct REST API client (SimioAPI class, no pysimio dependency)
-├── helper.py             # Original helper functions (kept for reference)
-├── .env                  # Environment variables (not included in repo)
-├── README.md             # Project documentation
-├── requirements.txt      # Python dependencies
-└── LICENSE.txt           # Apache License 2.0
+├── main.py                       # Main script (reads USE_PYSIMIO toggle to pick API mode)
+├── example_table_queries.py      # Standalone example: table data filtering & paging
+├── shared_helper.py              # Shared helper functions (works with either API mode)
+├── simio_api_helper.py           # Direct REST API client (SimioAPI class, no pysimio dependency)
+├── helper.py                     # Original helper functions (kept for reference)
+├── .env                          # Environment variables (not included in repo)
+├── README.md                     # Project documentation
+├── requirements.txt              # Python dependencies
+└── LICENSE.txt                   # Apache License 2.0
 ```
 
 ## API Modes
@@ -38,6 +39,22 @@ Both modes share the same helpers (`shared_helper.py`) and produce identical beh
   - **Log schema** — display log names and column definitions.
   - **Sample log data** — show the first 10 rows of the first non-empty log.
   - **Full table dump** — page through and display all rows of a user-selected table.
+
+## Example: Table Data Queries
+
+`example_table_queries.py` is a standalone script that demonstrates three approaches to querying table data with filtering and paging:
+
+| Example | Method | Description |
+|---------|--------|-------------|
+| **1** | pysimio — column filter | Fetches all pages, then filters to specific columns client-side |
+| **2** | pysimio — row filter | Uses the `filter` parameter with OData syntax (e.g. `"MaterialName eq 'Widget'"`) to return only matching rows server-side |
+| **3** | Direct REST API — column filter | Uses the `?columns=` query parameter to request specific columns server-side |
+
+All three examples page through the full result set automatically. Edit the variables at the top of the file (`run_id`, `scenario_name`, `table_name`, `columns`, `filter_expression`) and run:
+
+```bash
+python example_table_queries.py
+```
 
 ## Installation
 
